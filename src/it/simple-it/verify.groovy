@@ -1,3 +1,3 @@
-File touchFile = new File( basedir, "target/touch.txt" );
+File resultFile = new File( basedir, "target/redpen-result.txt" );
 
-assert touchFile.isFile()
+assert resultFile.isFile()

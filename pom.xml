@@ -54,6 +54,8 @@
       <version>1.9.0</version>
     </dependency>
 
+
+
     <!-- Test -->
     <dependency>
       <groupId>junit</groupId>
@@ -119,7 +121,7 @@
               <settingsFile>src/it/settings.xml</settingsFile>
               <goals>
                 <goal>clean</goal>
-                <goal>test-compile</goal>
+                <goal>test</goal>
               </goals>
             </configuration>
             <executions>
@@ -128,7 +130,6 @@
                 <goals>
                   <goal>install</goal>
                   <goal>integration-test</goal>
-                  <goal>verify</goal>
                 </goals>
               </execution>
             </executions>

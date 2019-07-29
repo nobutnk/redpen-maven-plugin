@@ -25,6 +25,7 @@ public class RedpenMojoTest {
         mojo.setLimit(1);
         mojo.setResultFormat("plain2");
         mojo.setOutputDirectory(outputFolder.getRoot());
+        mojo.setResultFileName("redpen-result.txt");
     }
     
     @Test

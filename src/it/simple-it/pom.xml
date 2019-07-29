@@ -19,12 +19,20 @@
         <groupId>@project.groupId@</groupId>
         <artifactId>@project.artifactId@</artifactId>
         <version>@project.version@</version>
+        <configuration>
+            <inputFormat>asciidoc</inputFormat>
+            <configFileName>resources/redpen-conf-ja.xml</configFileName>
+            <language>ja</language>
+            <limit>2</limit>
+            <resultFormat>json</resultFormat>
+            <inputFile>resources</inputFile>
+        </configuration>
         <executions>
           <execution>
-            <id>touch</id>
-            <phase>validate</phase>
+            <id>redpen</id>
+            <phase>test</phase>
             <goals>
-              <goal>touch</goal>
+              <goal>redpen</goal>
             </goals>
           </execution>
         </executions>

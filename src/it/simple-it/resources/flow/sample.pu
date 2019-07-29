@@ -1,0 +1,13 @@
+@startuml sample
+hide footbox
+actor takeshi as "ジャイアン"
+actor nobita as "のび太"
+actor dora as "ドラえもん"
+takeshi -> nobita: いじめる
+nobita -> dora: 助けを求める
+dora -> nobita : ひみつ道具を与える
+nobita -> takeshi : 仕返しをする
+nobita -> nobita : 調子に乗って痛い目に合う
+nobita -> dora : 助けを求める
+dora -> nobita : ひみつ道具を止める
+@enduml

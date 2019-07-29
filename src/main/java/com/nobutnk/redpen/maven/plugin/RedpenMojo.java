@@ -1,6 +1,11 @@
 package com.nobutnk.redpen.maven.plugin;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -51,11 +56,14 @@ public class RedpenMojo extends AbstractMojo {
 
     @Parameter(property = "redpen.config.inputFile", required = true)
     private String inputFile;
+    
+    @Parameter(property = "redpen.config.resultFile", required = true, defaultValue = "redpen-result.txt")
+    private String resultFileName;
 
     @Override
     public void execute() throws MojoExecutionException {
         getLog().info("redpen plugin start!");
-        getLog().debug("project.build.directory is " + outputDirectory.getAbsolutePath());
+        getLog().info("project.build.directory is " + outputDirectory.getAbsolutePath());
 
         String inputSentence = null;
 
@@ -82,7 +90,7 @@ public class RedpenMojo extends AbstractMojo {
         }
         
         List<String> inputFileList = new ArrayList<>();
-        search(inputFile, "adoc", inputFileList);
+        search(inputFile, getExtension(inputFormat), inputFileList);
         getLog().info("inputFiles = " + inputFileList);
         String[] inputFileNames = inputFileList.toArray(new String[inputFileList.size()]);
 
@@ -102,6 +110,12 @@ public class RedpenMojo extends AbstractMojo {
         }
         String result = formatter.format(documentListMap);
         System.out.println(result);
+        try {
+            output(result, outputDirectory, resultFileName);
+        } catch (IOException e) {
+            getLog().error(e);
+            return;
+        }
 
         long errorCount = documentListMap.values().stream().mapToLong(List::size).sum();
 
@@ -169,6 +183,20 @@ public class RedpenMojo extends AbstractMojo {
         }
         return null;
     }
+    
+    static String getExtension(String inputFormat) {
+        if ("asciidoc".equals(inputFormat)) {
+            return ".adoc";
+        } else if ("markdown".equals(inputFormat)) {
+            return ".md";
+        } else if ("plain".equals(inputFormat)) {
+            return ".txt";
+        } else if ("properties".equals(inputFormat)) {
+            return ".properties";
+        }
+        
+        return ".txt";
+    }
 
     static void search(String path, String extension, List<String> fileList) {
         File dir = new File(path);
@@ -181,6 +209,38 @@ public class RedpenMojo extends AbstractMojo {
                 if (fileName.endsWith(extension)) { // file_nameの最後尾(拡張子)が指定のものならば出力
                     fileList.add(path + "/" + fileName);
                 }
+            }
+        }
+    }
+    
+    static void output(String result, File directory, String fileName) throws IOException {
+        PrintWriter writer = null;
+        try {
+            // ディレクトリが存在するか確認、存在しない場合は作成
+            if (!directory.exists()) {
+                System.out.println("ディレクトリなし");
+                directory.mkdir();
+            } else {
+                System.out.println("ディレクトリあり");
+            }
+
+            // ファイルが存在するかの確認、存在しない場合は作成
+            File resultFile = new File(directory.getAbsolutePath(), fileName);
+            if (!resultFile.exists()) {
+                System.out.println("ファイルなし");
+                resultFile.createNewFile();
+            } else {
+                System.out.println("ファイルあり");
+            }
+
+            // ファイルに追記書き込み
+            writer = new PrintWriter
+                    (new BufferedWriter(new OutputStreamWriter
+                    (new FileOutputStream(resultFile),"utf-8")));
+            writer.write(result);
+        } finally {
+            if (writer != null) {
+                writer.close();
             }
         }
     }
@@ -206,5 +266,9 @@ public class RedpenMojo extends AbstractMojo {
     
     void setOutputDirectory(File outputDirectory) {
         this.outputDirectory = outputDirectory;
+    }
+    
+    void setResultFileName(String resultFileName) {
+        this.resultFileName = resultFileName;
     }
 }
