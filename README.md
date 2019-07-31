@@ -10,8 +10,7 @@ mavenからredpenを実行するためのpluginです。
 
 ## Redpenについて
 
-Redpen本体がCentral Repositoryから取得可能なのが `1.9` までであったため、
-本pluginは `1.9` 対応となっています。
+Redpen本体がCentral Repositoryから取得可能なのが `1.9` までであったため、本pluginは `1.9` 対応となっています。
 
 * [Redpen 1.9マニュアル](http://redpen.cc/docs/1.9/index_ja.html)
 * Redpenは `1.10` から `JapaneseExpressionVariation` (日本語表記ゆれ) が使用可能になっている。
