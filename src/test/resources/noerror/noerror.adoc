@@ -1,0 +1,124 @@
+:source-highlighter: coderay
+:toc:
+
+= Asciidocサンプル
+
+サンプル
+
+== はじめに
+AsciiDoc、graphviz、PlantUMLを使ってソフトウェアの仕様書を作るためのサンプルです。
+
+== AsciiDocの書き方
+Markdownを書いたことがあれば似たような感じでかけます。困ったら以下を参考にどう書くのか調べながら書いていけばよいと思います。
+
+link:https://takumon.github.io/asciidoc-syntax-quick-reference-japanese-translation/[Asciidoctor 文法クイックリファレンス(日本語訳)]
+
+== Markdownとの違い
+違いは以下にまとめられています。
+link:https://asciidoctor.org/docs/asciidoc-vs-markdown/[AsciiDoc vs Markdown, asciidoctor docs]
+
+よく使用し、Markdownと書き方が違うものを示す
+
+=== 見出し
+Markdownでは`#`で記述するがasciidocでは`=`を使用する。
+Markdownと同じで=の数でレベルを表現する
+
+=== 箇条書き
+Markdownでは-で記述するがasciidocでは*を使用する。
+箇条書きの字下げはMarkdownでは字下げして`-`だが、asciidocでは`*`の数で表現する。
+
+* 箇条書き1
+* 箇条書き2
+** １段下げ
+*** 2段下げ
+
+=== 番号付きの箇条書き
+Markdownでは数値. でasciidocでは.を使用する。`.`の数で字下げ
+
+. 番号付き1
+.. 1段下げ
+... 2段下げ
+
+=== テーブル
+テーブルは`|===`で始めて`|===`で終わるブロック内に書きます。
+行の終わりの`|`は不要です。
+ヘッダはヘッダとデータの行間に空白を入れるか、ブロックの頭にオプションでヘッダを指定します。
+オプションの指定で幅の自動調整も一緒にしたりするのでブロックの頭にオプション指定したほうが良いでしょう。
+
+```
+[options="header,autowidth"]
+|===
+|col1|col2|col3
+|data1|data2|data3
+|===
+
+もしくは
+
+|===
+|col1|col2|col3
+
+|data1|data2|data3
+|===
+```
+
+[options="header,autowidth"]
+|===
+|col1|col2|col3
+|data1|data2|data3
+|===
+
+Excelにあるセル結合のようなことも出来ます。
+
+.結合表
+[options="header,autowidth"]
+|====
+|col1|col2|col3
+3+|数値のあとに+を書くと横の結合
+.2+|.数値+だと縦結合|2-2|2-3
+|3-2|3-2
+|====
+
+
+=== PlantUML
+asciidoc-diagramを使用すると、PlantUMLを直接書けます。
+(画像を勝手に作って挿入してくれる。)
+
+別ファイルにしてincludeで使う方が良いでしょう
+
+.PlantUMLの例
+[plantuml]
+....
+class teleop_turtle
+class turtlesim
+teleop_turtle -> turtlesim : 速度司令を送る
+....
+
+=== graphviz
+graphvizのノードグラフも直接書けます。
+別ファイルにしてincludeで使う方が良いでしょう
+
+.turtlesimノードグラフ
+[graphviz]
+---------------------------------------------------------------------
+digraph G {
+    rankdir=LR;
+    fontname="sans-serif";
+    penwidth="0.1";
+    edge [comment="Wildcard edge", 
+          fontname="sans-serif", 
+          fontsize=10, 
+          colorscheme="blues3", 
+          color=2, 
+          fontcolor=3];
+    node [fontname="serif", 
+          fontsize=13, 
+          fillcolor="1", 
+          colorscheme="blues4", 
+          color="2", 
+          fontcolor="4", 
+          style="filled"];
+    "turtlesim";
+    "teleop_turtle";
+    "teleop_turtle" -> "turtlesim"  [label="turtle1/cmd_vel"];
+}
+---------------------------------------------------------------------

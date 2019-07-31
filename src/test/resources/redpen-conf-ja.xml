@@ -47,4 +47,14 @@
         <!--Load JavaScript validators-->
         <validator name="JavaScript" />
     </validators>
+    
+    <symbols>
+        <symbol name="EXCLAMATION_MARK" value="!" />
+        <symbol name="FULL_STOP" value="。" after-space="false" />
+        <symbol name="COMMA" value="、" after-space="false" />
+        <symbol name="LEFT_PARENTHESIS" value="（" after-space="falce"/>
+        <symbol name="RIGHT_PARENTHESIS" value="）" after-space="falce"/>
+        <symbol name="VERTICAL_BAR" value="|" after-space="false" />
+        <symbol name="NUMBER_SIGN" value="#" after-space="false" />
+    </symbols>
 </redpen-conf>

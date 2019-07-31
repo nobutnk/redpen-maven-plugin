@@ -1,11 +1,7 @@
 package com.nobutnk.redpen.maven.plugin;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -21,7 +17,6 @@ import cc.redpen.RedPen;
 import cc.redpen.RedPenException;
 import cc.redpen.formatter.Formatter;
 import cc.redpen.model.Document;
-import cc.redpen.parser.DocumentParser;
 import cc.redpen.util.FormatterUtils;
 import cc.redpen.validator.ValidationError;
 
@@ -30,9 +25,6 @@ import cc.redpen.validator.ValidationError;
  */
 @Mojo(name = "redpen", threadSafe = true, defaultPhase = LifecyclePhase.TEST)
 public class RedpenMojo extends AbstractMojo {
-
-    private static final String DEFAULT_CONFIG_NAME = "redpen-conf";
-
     /**
      * Location of the file.
      */
@@ -59,6 +51,10 @@ public class RedpenMojo extends AbstractMojo {
     
     @Parameter(property = "redpen.config.resultFile", required = true, defaultValue = "redpen-result.txt")
     private String resultFileName;
+    
+    private RedpenHelper redpenHelper = new RedpenHelper();
+    
+    private FileHelper fileHelper = new FileHelper();
 
     @Override
     public void execute() throws MojoExecutionException {
@@ -67,7 +63,7 @@ public class RedpenMojo extends AbstractMojo {
 
         String inputSentence = null;
 
-        File configFile = resolveConfigLocation(configFileName);
+        File configFile = redpenHelper.resolveConfigLocation(configFileName);
         if (configFile == null) {
             File pwd = new File(".");
             getLog().error("Configuration file is not found." + pwd.getAbsolutePath());
@@ -90,13 +86,13 @@ public class RedpenMojo extends AbstractMojo {
         }
         
         List<String> inputFileList = new ArrayList<>();
-        search(inputFile, getExtension(inputFormat), inputFileList);
+        fileHelper.search(inputFile, redpenHelper.getExtension(inputFormat), inputFileList);
         getLog().info("inputFiles = " + inputFileList);
         String[] inputFileNames = inputFileList.toArray(new String[inputFileList.size()]);
 
         List<Document> documents;
         try {
-            documents = getDocuments(inputFormat, inputSentence, inputFileNames, redPen);
+            documents = redpenHelper.getDocuments(inputFormat, inputSentence, inputFileNames, redPen);
         } catch (RedPenException e) {
             getLog().error(e);
             return;
@@ -111,7 +107,7 @@ public class RedpenMojo extends AbstractMojo {
         String result = formatter.format(documentListMap);
         System.out.println(result);
         try {
-            output(result, outputDirectory, resultFileName);
+            fileHelper.output(result, outputDirectory, resultFileName);
         } catch (IOException e) {
             getLog().error(e);
             return;
@@ -120,128 +116,10 @@ public class RedpenMojo extends AbstractMojo {
         long errorCount = documentListMap.values().stream().mapToLong(List::size).sum();
 
         if (errorCount > limit) {
-            getLog().error(String.format("The number of errors \"%d\" is larger than specified (limit is \"%d\").",
-                    errorCount, limit));
-        }
-    }
-
-    private static List<Document> getDocuments(
-            String inputFormat, String inputSentence,
-            String[] inputFileNames,
-            RedPen redPen) throws RedPenException {
-        List<Document> documents = new ArrayList<>();
-        DocumentParser parser = DocumentParser.of(inputFormat);
-        if (inputSentence == null) {
-            documents.addAll(redPen.parse(parser, extractInputFiles(inputFileNames)));
-        } else {
-            documents.add(redPen.parse(parser, inputSentence));
-        }
-        return documents;
-    }
-
-    private static File[] extractInputFiles(String[] inputFileNames) {
-        File[] inputFiles = new File[inputFileNames.length];
-        for (int i = 0; i < inputFileNames.length; i++) {
-            inputFiles[i] = new File(inputFileNames[i]);
-        }
-        return inputFiles;
-    }
-
-    static File resolveConfigLocation(String configFileName) {
-        List<String> pathCandidates = new ArrayList<>();
-        if (configFileName != null) {
-            pathCandidates.add(configFileName);
-        }
-        pathCandidates.add(DEFAULT_CONFIG_NAME + ".xml");
-        pathCandidates.add(DEFAULT_CONFIG_NAME + "-" + Locale.getDefault().getLanguage() + ".xml");
-        String redpenHome = System.getenv("REDPEN_HOME");
-        if (redpenHome != null) {
-            pathCandidates.add(redpenHome + File.separator + DEFAULT_CONFIG_NAME + ".xml");
-            pathCandidates.add(redpenHome + File.separator + DEFAULT_CONFIG_NAME + "-"
-                    + Locale.getDefault().getLanguage() + ".xml");
-            pathCandidates.add(redpenHome + File.separator + "conf" + File.separator + DEFAULT_CONFIG_NAME + ".xml");
-            pathCandidates.add(redpenHome + File.separator + "conf" + File.separator + DEFAULT_CONFIG_NAME + "-"
-                    + Locale.getDefault().getLanguage() + ".xml");
-        }
-        File resolved = resolve(pathCandidates);
-        if (resolved != null && resolved.exists() && resolved.isFile()) {
-            // getLog().info(String.format("Configuration file: %s",
-            // resolved.getAbsolutePath()));
-        } else {
-            resolved = null;
-        }
-        return resolved;
-    }
-
-    static File resolve(List<String> pathCandidates) {
-        File resolved;
-        for (String pathCandidate : pathCandidates) {
-            resolved = new File(pathCandidate);
-            if (resolved.exists() && resolved.isFile()) {
-                return resolved;
-            }
-        }
-        return null;
-    }
-    
-    static String getExtension(String inputFormat) {
-        if ("asciidoc".equals(inputFormat)) {
-            return ".adoc";
-        } else if ("markdown".equals(inputFormat)) {
-            return ".md";
-        } else if ("plain".equals(inputFormat)) {
-            return ".txt";
-        } else if ("properties".equals(inputFormat)) {
-            return ".properties";
-        }
-        
-        return ".txt";
-    }
-
-    static void search(String path, String extension, List<String> fileList) {
-        File dir = new File(path);
-        File files[] = dir.listFiles();
-        for (int i = 0; i < files.length; i++) {
-            String fileName = files[i].getName();
-            if (files[i].isDirectory()) { // ディレクトリなら再帰を行う
-                search(path + "/" + fileName, extension, fileList);
-            } else {
-                if (fileName.endsWith(extension)) { // file_nameの最後尾(拡張子)が指定のものならば出力
-                    fileList.add(path + "/" + fileName);
-                }
-            }
-        }
-    }
-    
-    static void output(String result, File directory, String fileName) throws IOException {
-        PrintWriter writer = null;
-        try {
-            // ディレクトリが存在するか確認、存在しない場合は作成
-            if (!directory.exists()) {
-                System.out.println("ディレクトリなし");
-                directory.mkdir();
-            } else {
-                System.out.println("ディレクトリあり");
-            }
-
-            // ファイルが存在するかの確認、存在しない場合は作成
-            File resultFile = new File(directory.getAbsolutePath(), fileName);
-            if (!resultFile.exists()) {
-                System.out.println("ファイルなし");
-                resultFile.createNewFile();
-            } else {
-                System.out.println("ファイルあり");
-            }
-
-            // ファイルに追記書き込み
-            writer = new PrintWriter
-                    (new BufferedWriter(new OutputStreamWriter
-                    (new FileOutputStream(resultFile),"utf-8")));
-            writer.write(result);
-        } finally {
-            if (writer != null) {
-                writer.close();
-            }
+            String message = String.format("The number of errors \"%d\" is larger than specified (limit is \"%d\").",
+                    errorCount, limit);
+            getLog().error(message);
+            throw new MojoExecutionException(message);
         }
     }
     
